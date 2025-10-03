@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Indian Constitution Chatbot (RAG)
 
 This project contains a RAG (retrieval-augmented generation) pipeline built in a Jupyter notebook and a Streamlit frontend to interact with it.
@@ -29,3 +30,7 @@ streamlit run frontend/app.py
 Notes
 - The backend uses `langchain_cohere.ChatCohere` and the notebook used the `command-xlarge-nightly` model. Make sure your Cohere plan supports it.
 - This is a minimal integration focused on reusing the notebook code with a simple frontend. You can extend `backend/rag_bot.py` to support caching, streaming responses, or different LLMs.
+=======
+# Indian-Constitution-Bot
+IndianConstitutionBot is an AI-powered chatbot that provides quick and accurate answers about the Indian Constitution. Using RAG (Retrieval-Augmented Generation), it retrieves relevant sections from official documents and generates clear, human-like responses with the help of a Large Language Model (LLM)
+>>>>>>> 1d49aa9976eea8d260564b1f59e682eee6532c34
