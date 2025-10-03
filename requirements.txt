@@ -1,0 +1,8 @@
+streamlit
+langchain
+langchain-cohere
+cohere
+faiss-cpu
+sentence-transformers
+PyMuPDF
+pypdf
