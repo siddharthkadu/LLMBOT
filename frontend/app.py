@@ -1,5 +1,14 @@
 import os
+import sys
+import time
 import streamlit as st
+
+# Ensure the repository root is on sys.path so `import backend...` works when
+# Streamlit starts with a working directory inside `frontend` or elsewhere.
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
 from backend.rag_bot import get_default_bot
 
 import cohere
@@ -95,6 +104,16 @@ def add_bot_message(text: str, sources=None):
     st.session_state.messages.append({"role": "bot", "text": text, "sources": sources or []})
 
 
+def replace_bot_message(index: int, text: str, sources=None):
+    """Replace bot message at index with new text and sources."""
+    try:
+        st.session_state.messages[index]["text"] = text
+        st.session_state.messages[index]["sources"] = sources or []
+    except Exception:
+        # If index invalid, append instead
+        st.session_state.messages.append({"role": "bot", "text": text, "sources": sources or []})
+
+
 col1, col2 = st.columns([3, 1])
 
 with col1:
@@ -117,16 +136,64 @@ with col2:
     if st.button("Clear chat"):
         st.session_state.messages = []
 
-user_input = st.text_input("", placeholder="Ask a question about the Indian Constitution...")
-send = st.button("Send")
+# Text input with Enter key handling using on_change and session_state.
+# This ensures a single Enter (or Send button click) submits immediately
+# and we can clear the input reliably after submission.
+# Ensure chat_input exists in session_state
+if "chat_input" not in st.session_state:
+    st.session_state["chat_input"] = ""
 
-if send and user_input.strip():
-    add_user_message(user_input)
-    with st.spinner("Thinking..."):
-        try:
-            resp = st.session_state.bot.answer(user_input)
-        except Exception as e:
-            st.error(f"Error: {e}")
-        else:
-            add_bot_message(resp.get("answer"), resp.get("sources"))
+def _process_message(text: str):
+    text = (text or "").strip()
+    if not text:
+        return
+    # Append user message immediately (will show after rerun)
+    add_user_message(text)
+    # Clear input before making the backend call so the UI resets
+    st.session_state["chat_input"] = ""
+
+    # Simple session cache for recent queries
+    cache = st.session_state.setdefault("_qa_cache", {})
+    if text in cache:
+        add_bot_message(cache[text]["answer"], cache[text].get("sources", []))
+        return
+
+    # Process synchronously to avoid thread-based session_state access.
+    # Add a placeholder message so the UI gives immediate feedback.
+    placeholder_index = len(st.session_state.get("messages", []))
+    add_bot_message("...", [])
+
+    # Ensure bot is initialized
+    if not st.session_state.get("bot"):
+        # Replace placeholder with friendly warning
+        replace_bot_message(placeholder_index, "Error: bot not connected. Please set COHERE_API_KEY and validate in the sidebar.", [])
+        return
+
+    try:
+        resp = st.session_state.bot.answer(text)
+        answer = resp.get("answer")
+        sources = resp.get("sources", [])
+    except Exception as e:
+        answer = f"Error: {e}"
+        sources = []
+
+    # store in cache
+    try:
+        cache[text] = {"answer": answer, "sources": sources}
+    except Exception:
+        pass
+
+    # Replace the placeholder text
+    replace_bot_message(placeholder_index, answer, sources)
+
+def _on_enter():
+    # Called when Enter is pressed inside text_input; process immediately
+    _process_message(st.session_state.get("chat_input", ""))
+
+# Now create the input widget and Send button for interactions.
+user_input = st.text_input("Ask", key="chat_input", placeholder="Ask a question about the Indian Constitution...", on_change=_on_enter, label_visibility="collapsed")
+
+# Also provide a Send button for mouse users
+if st.button("Send"):
+    _process_message(st.session_state.get("chat_input", ""))
 
