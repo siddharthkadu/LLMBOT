@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Indian Constitution Chatbot (RAG)
 
 This project contains a RAG (retrieval-augmented generation) pipeline built in a Jupyter notebook and a Streamlit frontend to interact with it.
@@ -33,4 +32,4 @@ Notes
 =======
 # Indian-Constitution-Bot
 IndianConstitutionBot is an AI-powered chatbot that provides quick and accurate answers about the Indian Constitution. Using RAG (Retrieval-Augmented Generation), it retrieves relevant sections from official documents and generates clear, human-like responses with the help of a Large Language Model (LLM)
->>>>>>> 1d49aa9976eea8d260564b1f59e682eee6532c34
+
